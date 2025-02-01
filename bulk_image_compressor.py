@@ -61,7 +61,7 @@ class ImageCompressor:
             # Resize image if it exceeds max_width
             if img.width > self.max_width:
                 new_height = int((self.max_width / img.width) * img.height)
-                img = img.resize((self.max_width, new_height), Image.LANCZOS)
+                img = img.resize((self.max_width, new_height), Image.Resampling.LANCZOS)
             
             # Save as WebP format for better compression
             img.save(output_path, format="WebP", quality=self.quality, optimize=True)
