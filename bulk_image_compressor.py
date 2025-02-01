@@ -4,19 +4,28 @@ from PIL import Image
 from tqdm import tqdm
 
 class ImageCompressor:
-    def __init__(self, input_folder, output_folder, quality=80, max_width=1024):
+    def __init__(self, input_folder, output_folder, quality=80, resize=False, max_width=1024, output_format='jpg'):
         """
         Initializes the ImageCompressor with input folder, output folder, and quality setting.
         :param input_folder: Path to the folder containing images to be compressed.
         :param output_folder: Path where compressed images will be saved.
         :param quality: Quality setting for image compression (default: 80).
+        :param resize: Flag to enable/disable resizing (default: False).
         :param max_width: Maximum width for resized images (default: 1024 pixels).
+        :param output_format: Desired output image format (default: jpg). Supports 'jpg', 'jpeg', 'png', 'webp'.
         """
         self.input_folder = input_folder
         self.output_folder = output_folder
         self.quality = quality
+        self.resize = resize
         self.max_width = max_width
+        self.output_format = output_format.lower()
         self.images = self._get_images()
+        
+        # Validate output format
+        if self.output_format not in ['jpg', 'jpeg', 'png', 'webp']:
+            print("Invalid output format. Defaulting to 'jpg'.")
+            self.output_format = 'jpg'
         
         # Create the output folder if it doesn't exist
         if not os.path.exists(output_folder):
@@ -53,32 +62,34 @@ class ImageCompressor:
         :param image_name: Name of the image file to compress.
         """
         input_path = os.path.join(self.input_folder, image_name)
-        output_path = os.path.join(self.output_folder, os.path.splitext(image_name)[0] + ".webp")
+        output_path = os.path.join(self.output_folder, os.path.splitext(image_name)[0] + f".{self.output_format}")
 
         with Image.open(input_path) as img:
             img = img.convert("RGB")  # Ensuring RGB format for compatibility
             
-            # Resize image if it exceeds max_width
-            if img.width > self.max_width:
+            # Resize image if resizing is enabled and it exceeds max_width
+            if self.resize and img.width > self.max_width:
                 new_height = int((self.max_width / img.width) * img.height)
                 img = img.resize((self.max_width, new_height), Image.Resampling.LANCZOS)
             
-            # Save as WebP format for better compression
-            img.save(output_path, format="WebP", quality=self.quality, optimize=True)
+            # Save the image in the requested format
+            img.save(output_path, format=self.output_format.upper(), quality=self.quality, optimize=True)
 
 if __name__ == "__main__":
     """
     Main script execution: Parses command-line arguments and starts the compression process.
     """
     if len(sys.argv) < 3:
-        print("Usage: python bulk_image_compressor.py <input_folder> <output_folder> [quality] [max_width]")
+        print("Usage: python bulk_image_compressor.py <input_folder> <output_folder> [quality] [resize] [max_width] [output_format]")
         sys.exit(1)
     
     input_folder = sys.argv[1]
     output_folder = sys.argv[2]
     quality = int(sys.argv[3]) if len(sys.argv) > 3 else 80
-    max_width = int(sys.argv[4]) if len(sys.argv) > 4 else 1024
+    resize = bool(int(sys.argv[4])) if len(sys.argv) > 4 else False
+    max_width = int(sys.argv[5]) if len(sys.argv) > 5 else 1024
+    output_format = sys.argv[6] if len(sys.argv) > 6 else 'jpg'
     
     # Create an instance of ImageCompressor and start compression
-    compressor = ImageCompressor(input_folder, output_folder, quality, max_width)
+    compressor = ImageCompressor(input_folder, output_folder, quality, resize, max_width, output_format)
     compressor.compress_images()
