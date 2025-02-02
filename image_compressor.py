@@ -57,7 +57,7 @@ class ImageCompressor:
                 self._compress_image(image_name)
                 pbar.update(1)
                 # Print out file count status of image compressions
-                tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
+                # tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
         
         print("Compression complete!")
 
