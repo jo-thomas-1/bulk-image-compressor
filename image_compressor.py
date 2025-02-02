@@ -103,6 +103,14 @@ if __name__ == "__main__":
     resize = sys.argv[4].lower() in ["1", "true"] if len(sys.argv) > 4 else False
     max_width = int(sys.argv[5]) if len(sys.argv) > 5 else 1024
     output_format = sys.argv[6] if len(sys.argv) > 6 else 'jpeg'
+
+    print("\n:::: Compression Configuration ::::")
+    print(f'Input Folder: {input_folder}')
+    print(f'Output Folder: {output_folder}')
+    print(f'Quality: {quality}')
+    print(f'Resize: {resize}')
+    if resize: print(f'Max Width: {max_width}')
+    print(f'Output Format: {output_format}\n')
     
     # Create an instance of ImageCompressor and start compression
     compressor = ImageCompressor(input_folder, output_folder, quality, resize, max_width, output_format)
