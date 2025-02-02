@@ -50,9 +50,12 @@ class ImageCompressor:
         print(f"Found {total_images} images. Starting compression...")
         
         # Loop through each image and compress it
-        for index, image_name in enumerate(tqdm(self.images, desc="Compressing", unit="image")):
-            self._compress_image(image_name)
-            print(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}", end='\r')
+        with tqdm(total=total_images, desc="Compressing", unit="image") as pbar:
+            for index, image_name in enumerate(self.images):
+                self._compress_image(image_name)
+                pbar.update(1)
+                # Print out file count status of image compressions
+                # tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
         
         print("Compression complete!")
 
