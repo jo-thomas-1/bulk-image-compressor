@@ -12,7 +12,7 @@ class ImageCompressor:
         :param quality: Quality setting for image compression (default: 80).
         :param resize: Flag to enable/disable resizing (default: False).
         :param max_width: Maximum width for resized images (default: 1024 pixels).
-        :param output_format: Desired output image format (default: jpeg). Supports 'jpeg', 'png', 'webp'.
+        :param output_format: Desired output image format (default: jpeg). Supports 'jpg', 'jpeg', 'png', 'webp'.
         """
         self.input_folder = input_folder
         self.output_folder = output_folder
@@ -23,7 +23,9 @@ class ImageCompressor:
         self.images = self._get_images()
         
         # Validate output format
-        if self.output_format not in ['jpeg', 'png', 'webp']:
+        if self.output_format in ['jpg', 'jpeg']:
+            self.output_format = 'jpeg'
+        elif self.output_format not in ['jpeg', 'png', 'webp']:
             print("Invalid output format. Defaulting to 'jpeg'.")
             self.output_format = 'jpeg'
         
@@ -55,7 +57,7 @@ class ImageCompressor:
                 self._compress_image(image_name)
                 pbar.update(1)
                 # Print out file count status of image compressions
-                # tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
+                tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
         
         print("Compression complete!")
 
@@ -81,7 +83,11 @@ class ImageCompressor:
                 img.save(output_path, format=self.output_format.upper(), quality=self.quality, optimize=True)
         
         except Exception as e:
-            tqdm.write(f"Error :: {input_path} :: {e}")
+            error_msg = f"Error :: {input_path} :: {os.path.getsize(input_path)} :: {e}"
+            tqdm.write(error_msg)
+            with open("error_log.txt", "a") as log_file:
+                log_file.write(error_msg + "\n")
+
 
 if __name__ == "__main__":
     """
@@ -94,7 +100,7 @@ if __name__ == "__main__":
     input_folder = sys.argv[1]
     output_folder = sys.argv[2]
     quality = int(sys.argv[3]) if len(sys.argv) > 3 else 80
-    resize = bool(int(sys.argv[4])) if len(sys.argv) > 4 else False
+    resize = sys.argv[4].lower() in ["1", "true"] if len(sys.argv) > 4 else False
     max_width = int(sys.argv[5]) if len(sys.argv) > 5 else 1024
     output_format = sys.argv[6] if len(sys.argv) > 6 else 'jpeg'
     
