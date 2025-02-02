@@ -62,21 +62,26 @@ class ImageCompressor:
     def _compress_image(self, image_name):
         """
         Compresses a single image and saves it to the output folder.
+        If compression fails, logs the error and continues with remaining images.
         :param image_name: Name of the image file to compress.
         """
         input_path = os.path.join(self.input_folder, image_name)
         output_path = os.path.join(self.output_folder, os.path.splitext(image_name)[0] + f".{self.output_format}")
 
-        with Image.open(input_path) as img:
-            img = img.convert("RGB")  # Ensuring RGB format for compatibility
-            
-            # Resize image if resizing is enabled and it exceeds max_width
-            if self.resize and img.width > self.max_width:
-                new_height = int((self.max_width / img.width) * img.height)
-                img = img.resize((self.max_width, new_height), Image.Resampling.LANCZOS)
-            
-            # Save the image in the requested format
-            img.save(output_path, format=self.output_format.upper(), quality=self.quality, optimize=True)
+        try:
+            with Image.open(input_path) as img:
+                img = img.convert("RGB")  # Ensuring RGB format for compatibility
+                
+                # Resize image if resizing is enabled and it exceeds max_width
+                if self.resize and img.width > self.max_width:
+                    new_height = int((self.max_width / img.width) * img.height)
+                    img = img.resize((self.max_width, new_height), Image.Resampling.LANCZOS)
+                
+                # Save the image in the requested format
+                img.save(output_path, format=self.output_format.upper(), quality=self.quality, optimize=True)
+        
+        except Exception as e:
+            tqdm.write(f"Error :: {input_path} :: {e}")
 
 if __name__ == "__main__":
     """
