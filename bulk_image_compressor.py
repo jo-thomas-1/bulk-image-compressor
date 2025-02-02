@@ -4,7 +4,7 @@ from PIL import Image
 from tqdm import tqdm
 
 class ImageCompressor:
-    def __init__(self, input_folder, output_folder, quality=80, resize=False, max_width=1024, output_format='jpg'):
+    def __init__(self, input_folder, output_folder, quality=80, resize=False, max_width=1024, output_format='jpeg'):
         """
         Initializes the ImageCompressor with input folder, output folder, and quality setting.
         :param input_folder: Path to the folder containing images to be compressed.
@@ -12,7 +12,7 @@ class ImageCompressor:
         :param quality: Quality setting for image compression (default: 80).
         :param resize: Flag to enable/disable resizing (default: False).
         :param max_width: Maximum width for resized images (default: 1024 pixels).
-        :param output_format: Desired output image format (default: jpg). Supports 'jpg', 'jpeg', 'png', 'webp'.
+        :param output_format: Desired output image format (default: jpeg). Supports 'jpeg', 'png', 'webp'.
         """
         self.input_folder = input_folder
         self.output_folder = output_folder
@@ -23,9 +23,9 @@ class ImageCompressor:
         self.images = self._get_images()
         
         # Validate output format
-        if self.output_format not in ['jpg', 'jpeg', 'png', 'webp']:
-            print("Invalid output format. Defaulting to 'jpg'.")
-            self.output_format = 'jpg'
+        if self.output_format not in ['jpeg', 'png', 'webp']:
+            print("Invalid output format. Defaulting to 'jpeg'.")
+            self.output_format = 'jpeg'
         
         # Create the output folder if it doesn't exist
         if not os.path.exists(output_folder):
@@ -36,7 +36,7 @@ class ImageCompressor:
         Retrieves a list of image files from the input folder.
         :return: List of image filenames.
         """
-        return [f for f in os.listdir(self.input_folder) if f.lower().endswith(('jpg', 'jpeg', 'png', 'webp'))]
+        return [f for f in os.listdir(self.input_folder) if f.lower().endswith(('jpg', 'jpeg', 'png', 'webp', 'tiff', 'gif', 'bmp'))]
 
     def compress_images(self):
         """
@@ -52,7 +52,7 @@ class ImageCompressor:
         # Loop through each image and compress it
         for index, image_name in enumerate(tqdm(self.images, desc="Compressing", unit="image")):
             self._compress_image(image_name)
-            print(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
+            print(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}", end='\r')
         
         print("Compression complete!")
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     quality = int(sys.argv[3]) if len(sys.argv) > 3 else 80
     resize = bool(int(sys.argv[4])) if len(sys.argv) > 4 else False
     max_width = int(sys.argv[5]) if len(sys.argv) > 5 else 1024
-    output_format = sys.argv[6] if len(sys.argv) > 6 else 'jpg'
+    output_format = sys.argv[6] if len(sys.argv) > 6 else 'jpeg'
     
     # Create an instance of ImageCompressor and start compression
     compressor = ImageCompressor(input_folder, output_folder, quality, resize, max_width, output_format)
