@@ -5,7 +5,7 @@ from PIL import Image
 from tqdm import tqdm
 
 class ImageCompressor:
-    def __init__(self, input_folder, output_folder, quality=80, resize=False, max_width=1024, output_format='jpeg', recursive=False):
+    def __init__(self, input_folder, output_folder, quality=80, resize=False, max_width=1024, output_format='jpeg', recursive=False, break_structure=False):
         """
         Initializes the ImageCompressor with input folder, output folder, and quality setting.
         :param input_folder: Path to the folder containing images to be compressed.
@@ -15,6 +15,7 @@ class ImageCompressor:
         :param max_width: Maximum width for resized images (default: 1024 pixels).
         :param output_format: Desired output image format (default: jpeg). Supports 'jpg', 'jpeg', 'png', 'webp'.
         :param recursive: Flag to enable recursive image search (default: False).
+        :param break_structure: Flag to break folder structure in output (default: False).
         """
 
         # Check if input folder exists
@@ -28,6 +29,7 @@ class ImageCompressor:
         self.max_width = max_width
         self.output_format = output_format.lower()
         self.recursive = recursive
+        self.break_structure = break_structure
         self.images = self._get_images()
         
         # Validate output format
@@ -52,8 +54,11 @@ class ImageCompressor:
                 for file in files:
                     if file.lower().endswith(('jpg', 'jpeg', 'png', 'webp', 'tiff', 'gif', 'bmp')):
                         input_path = os.path.join(root, file)
-                        relative_path = os.path.relpath(root, self.input_folder)
-                        output_dir = os.path.join(self.output_folder, relative_path)
+                        if self.break_structure:
+                            output_dir = self.output_folder
+                        else:
+                            relative_path = os.path.relpath(root, self.input_folder)
+                            output_dir = os.path.join(self.output_folder, relative_path)
                         output_path = os.path.join(output_dir, os.path.splitext(file)[0] + f".{self.output_format}")
                         image_files.append((input_path, output_path))
         else:
@@ -66,7 +71,7 @@ class ImageCompressor:
 
     def compress_images(self):
         """
-        Compresses all images in the input folder and saves them to the output folder while maintaining structure if recursive.
+        Compresses all images in the input folder and saves them to the output folder while maintaining structure if enabled.
         """
         total_images = len(self.images)
         if total_images == 0:
@@ -122,20 +127,12 @@ if __name__ == "__main__":
     parser.add_argument("--max_width", type=int, default=1024, help="Maximum width for resized images (default: 1024)")
     parser.add_argument("--output_format", type=str, default='jpeg', choices=['jpeg', 'png', 'webp'], help="Desired output format (default: jpeg)")
     parser.add_argument("--recursive", action="store_true", help="Enable recursive search for images in subdirectories")
+    parser.add_argument("--break_structure", action="store_true", help="Break folder structure in output directory")
     
     args = parser.parse_args()
     
-    print("\n:::: Compression Configuration ::::")
-    print(f'Input Folder: {args.input_folder}')
-    print(f'Output Folder: {args.output_folder}')
-    print(f'Quality: {args.quality}')
-    print(f'Resize: {args.resize}')
-    if args.resize: print(f'Max Width: {args.max_width}')
-    print(f'Output Format: {args.output_format}')
-    print(f'Recursive: {args.recursive}\n')
-    
     try:
-        compressor = ImageCompressor(args.input_folder, args.output_folder, args.quality, args.resize, args.max_width, args.output_format, args.recursive)
+        compressor = ImageCompressor(args.input_folder, args.output_folder, args.quality, args.resize, args.max_width, args.output_format, args.recursive, args.break_structure)
         compressor.compress_images()
     except FileNotFoundError as e:
         print(e)
