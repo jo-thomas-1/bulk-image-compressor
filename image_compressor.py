@@ -41,14 +41,23 @@ class ImageCompressor:
 
     def _get_images(self):
         """
-        Retrieves a list of image files from the input folder.
-        :return: List of image filenames.
+        Recursively retrieves a list of image files from the input folder while maintaining folder structure.
+        :return: List of tuples containing image file paths and their corresponding output paths.
         """
-        return [f for f in os.listdir(self.input_folder) if f.lower().endswith(('jpg', 'jpeg', 'png', 'webp', 'tiff', 'gif', 'bmp'))]
+        image_files = []
+        for root, _, files in os.walk(self.input_folder):
+            for file in files:
+                if file.lower().endswith(('jpg', 'jpeg', 'png', 'webp', 'tiff', 'gif', 'bmp')):
+                    input_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(root, self.input_folder)
+                    output_dir = os.path.join(self.output_folder, relative_path)
+                    output_path = os.path.join(output_dir, os.path.splitext(file)[0] + f".{self.output_format}")
+                    image_files.append((input_path, output_path))
+        return image_files
 
     def compress_images(self):
         """
-        Compresses all images in the input folder and saves them to the output folder.
+        Compresses all images in the input folder and saves them to the output folder while maintaining structure.
         """
         total_images = len(self.images)
         if total_images == 0:
@@ -57,25 +66,22 @@ class ImageCompressor:
         
         print(f"Found {total_images} images. Starting compression...")
         
-        # Loop through each image and compress it
         with tqdm(total=total_images, desc="Compressing", unit="image") as pbar:
-            for index, image_name in enumerate(self.images):
-                self._compress_image(image_name)
+            for index, (input_path, output_path) in enumerate(self.images):
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                self._compress_image(input_path, output_path)
                 pbar.update(1)
-                # Print out file count status of image compressions
                 tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
                 
         print("Compression complete!")
 
-    def _compress_image(self, image_name):
+    def _compress_image(self, input_path, output_path):
         """
         Compresses a single image and saves it to the output folder.
         If compression fails, logs the error and continues with remaining images.
-        :param image_name: Name of the image file to compress.
+        :param input_path: Path of the image file to compress.
+        :param output_path: Destination path where compressed image will be saved.
         """
-        input_path = os.path.join(self.input_folder, image_name)
-        output_path = os.path.join(self.output_folder, os.path.splitext(image_name)[0] + f".{self.output_format}")
-
         try:
             with Image.open(input_path) as img:
                 img = img.convert("RGB")  # Ensuring RGB format for compatibility
