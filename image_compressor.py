@@ -5,7 +5,7 @@ from PIL import Image
 from tqdm import tqdm
 
 class ImageCompressor:
-    def __init__(self, input_folder, output_folder, quality=80, resize=False, max_width=1024, output_format='jpeg'):
+    def __init__(self, input_folder, output_folder, quality=80, resize=False, max_width=1024, output_format='jpeg', recursive=False):
         """
         Initializes the ImageCompressor with input folder, output folder, and quality setting.
         :param input_folder: Path to the folder containing images to be compressed.
@@ -14,6 +14,7 @@ class ImageCompressor:
         :param resize: Flag to enable/disable resizing (default: False).
         :param max_width: Maximum width for resized images (default: 1024 pixels).
         :param output_format: Desired output image format (default: jpeg). Supports 'jpg', 'jpeg', 'png', 'webp'.
+        :param recursive: Flag to enable recursive image search (default: False).
         """
 
         # Check if input folder exists
@@ -26,6 +27,7 @@ class ImageCompressor:
         self.resize = resize
         self.max_width = max_width
         self.output_format = output_format.lower()
+        self.recursive = recursive
         self.images = self._get_images()
         
         # Validate output format
@@ -41,23 +43,30 @@ class ImageCompressor:
 
     def _get_images(self):
         """
-        Recursively retrieves a list of image files from the input folder while maintaining folder structure.
+        Retrieves a list of image files from the input folder. If recursive is enabled, it processes subdirectories.
         :return: List of tuples containing image file paths and their corresponding output paths.
         """
         image_files = []
-        for root, _, files in os.walk(self.input_folder):
-            for file in files:
+        if self.recursive:
+            for root, _, files in os.walk(self.input_folder):
+                for file in files:
+                    if file.lower().endswith(('jpg', 'jpeg', 'png', 'webp', 'tiff', 'gif', 'bmp')):
+                        input_path = os.path.join(root, file)
+                        relative_path = os.path.relpath(root, self.input_folder)
+                        output_dir = os.path.join(self.output_folder, relative_path)
+                        output_path = os.path.join(output_dir, os.path.splitext(file)[0] + f".{self.output_format}")
+                        image_files.append((input_path, output_path))
+        else:
+            for file in os.listdir(self.input_folder):
                 if file.lower().endswith(('jpg', 'jpeg', 'png', 'webp', 'tiff', 'gif', 'bmp')):
-                    input_path = os.path.join(root, file)
-                    relative_path = os.path.relpath(root, self.input_folder)
-                    output_dir = os.path.join(self.output_folder, relative_path)
-                    output_path = os.path.join(output_dir, os.path.splitext(file)[0] + f".{self.output_format}")
+                    input_path = os.path.join(self.input_folder, file)
+                    output_path = os.path.join(self.output_folder, os.path.splitext(file)[0] + f".{self.output_format}")
                     image_files.append((input_path, output_path))
         return image_files
 
     def compress_images(self):
         """
-        Compresses all images in the input folder and saves them to the output folder while maintaining structure.
+        Compresses all images in the input folder and saves them to the output folder while maintaining structure if recursive.
         """
         total_images = len(self.images)
         if total_images == 0:
@@ -112,6 +121,7 @@ if __name__ == "__main__":
     parser.add_argument("--resize", action="store_true", help="Enable resizing of images")
     parser.add_argument("--max_width", type=int, default=1024, help="Maximum width for resized images (default: 1024)")
     parser.add_argument("--output_format", type=str, default='jpeg', choices=['jpeg', 'png', 'webp'], help="Desired output format (default: jpeg)")
+    parser.add_argument("--recursive", action="store_true", help="Enable recursive search for images in subdirectories")
     
     args = parser.parse_args()
     
@@ -121,10 +131,11 @@ if __name__ == "__main__":
     print(f'Quality: {args.quality}')
     print(f'Resize: {args.resize}')
     if args.resize: print(f'Max Width: {args.max_width}')
-    print(f'Output Format: {args.output_format}\n')
+    print(f'Output Format: {args.output_format}')
+    print(f'Recursive: {args.recursive}\n')
     
     try:
-        compressor = ImageCompressor(args.input_folder, args.output_folder, args.quality, args.resize, args.max_width, args.output_format)
+        compressor = ImageCompressor(args.input_folder, args.output_folder, args.quality, args.resize, args.max_width, args.output_format, args.recursive)
         compressor.compress_images()
     except FileNotFoundError as e:
         print(e)
