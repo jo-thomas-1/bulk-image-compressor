@@ -85,7 +85,7 @@ class ImageCompressor:
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
                 self._compress_image(input_path, output_path)
                 pbar.update(1)
-                tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
+                # tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
                 
         print("Compression complete!")
 
