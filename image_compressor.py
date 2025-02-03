@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 from PIL import Image
 from tqdm import tqdm
 
@@ -14,6 +15,11 @@ class ImageCompressor:
         :param max_width: Maximum width for resized images (default: 1024 pixels).
         :param output_format: Desired output image format (default: jpeg). Supports 'jpg', 'jpeg', 'png', 'webp'.
         """
+
+        # Check if input folder exists
+        if not os.path.exists(input_folder) or not os.path.isdir(input_folder):
+            raise FileNotFoundError(f"Error: Input folder '{input_folder}' does not exist or is not a directory.")
+        
         self.input_folder = input_folder
         self.output_folder = output_folder
         self.quality = quality
@@ -57,8 +63,8 @@ class ImageCompressor:
                 self._compress_image(image_name)
                 pbar.update(1)
                 # Print out file count status of image compressions
-                # tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
-        
+                tqdm.write(f"Compressed: {index + 1}/{total_images} - Remaining: {total_images - (index + 1)}")
+                
         print("Compression complete!")
 
     def _compress_image(self, image_name):
@@ -91,27 +97,29 @@ class ImageCompressor:
 
 if __name__ == "__main__":
     """
-    Main script execution: Parses command-line arguments and starts the compression process.
+    Main script execution: Parses command-line arguments using argparse and starts the compression process.
     """
-    if len(sys.argv) < 3:
-        print("Usage: python bulk_image_compressor.py <input_folder> <output_folder> [quality] [resize] [max_width] [output_format]")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Bulk Image Compressor")
+    parser.add_argument("input_folder", type=str, help="Path to the folder containing images to compress")
+    parser.add_argument("output_folder", type=str, help="Path where compressed images will be saved")
+    parser.add_argument("--quality", type=int, default=80, help="Quality setting for image compression (default: 80)")
+    parser.add_argument("--resize", action="store_true", help="Enable resizing of images")
+    parser.add_argument("--max_width", type=int, default=1024, help="Maximum width for resized images (default: 1024)")
+    parser.add_argument("--output_format", type=str, default='jpeg', choices=['jpeg', 'png', 'webp'], help="Desired output format (default: jpeg)")
     
-    input_folder = sys.argv[1]
-    output_folder = sys.argv[2]
-    quality = int(sys.argv[3]) if len(sys.argv) > 3 else 80
-    resize = sys.argv[4].lower() in ["1", "true"] if len(sys.argv) > 4 else False
-    max_width = int(sys.argv[5]) if len(sys.argv) > 5 else 1024
-    output_format = sys.argv[6] if len(sys.argv) > 6 else 'jpeg'
-
+    args = parser.parse_args()
+    
     print("\n:::: Compression Configuration ::::")
-    print(f'Input Folder: {input_folder}')
-    print(f'Output Folder: {output_folder}')
-    print(f'Quality: {quality}')
-    print(f'Resize: {resize}')
-    if resize: print(f'Max Width: {max_width}')
-    print(f'Output Format: {output_format}\n')
+    print(f'Input Folder: {args.input_folder}')
+    print(f'Output Folder: {args.output_folder}')
+    print(f'Quality: {args.quality}')
+    print(f'Resize: {args.resize}')
+    if args.resize: print(f'Max Width: {args.max_width}')
+    print(f'Output Format: {args.output_format}\n')
     
-    # Create an instance of ImageCompressor and start compression
-    compressor = ImageCompressor(input_folder, output_folder, quality, resize, max_width, output_format)
-    compressor.compress_images()
+    try:
+        compressor = ImageCompressor(args.input_folder, args.output_folder, args.quality, args.resize, args.max_width, args.output_format)
+        compressor.compress_images()
+    except FileNotFoundError as e:
+        print(e)
+        sys.exit(1)
