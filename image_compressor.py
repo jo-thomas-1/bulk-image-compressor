@@ -21,7 +21,7 @@ class ImageCompressor:
     Supports maintaining folder structure, resizing, and adaptive worker scaling.
     """
 
-    def __init__(self, input_folder, output_folder, quality=80, resize=False, max_width=1024, output_format='jpeg', recursive=False, break_structure=False, parallel=False):
+    def __init__(self, input_folder, output_folder, quality=80, resize=False, max_width=1024, output_format='jpeg', recursive=False, collapse=False, parallel=False):
         """
         Initializes the ImageCompressor with user-specified options.
         
@@ -32,7 +32,7 @@ class ImageCompressor:
         :param max_width: Maximum width for resized images (default: 1024 pixels).
         :param output_format: Desired output image format (default: jpeg). Supports 'jpeg', 'png', 'webp'.
         :param recursive: Whether to search for images in subdirectories.
-        :param break_structure: Whether to flatten directory structure in output.
+        :param collapse: Whether to flatten directory structure in output.
         :param parallel: Enable parallel processing for faster compression.
         """
 
@@ -47,7 +47,7 @@ class ImageCompressor:
         self.max_width = max_width
         self.output_format = output_format.lower()
         self.recursive = recursive
-        self.break_structure = break_structure
+        self.collapse = collapse
         self.parallel = parallel
         self.images = self._get_images()
         
@@ -74,7 +74,7 @@ class ImageCompressor:
                 for file in files:
                     if file.lower().endswith(('jpg', 'jpeg', 'png', 'webp', 'tiff', 'gif', 'bmp')):
                         input_path = os.path.join(root, file)
-                        if self.break_structure:
+                        if self.collapse:
                             output_dir = self.output_folder
                         else:
                             relative_path = os.path.relpath(root, self.input_folder)
@@ -150,12 +150,13 @@ class ImageCompressor:
     def _compress_image(self, input_path, output_path, worker_id=None):
         try:
             with Image.open(input_path) as img:
-                img = img.convert("RGB")
+                exif_data = img.info.get('exif')  # Preserve EXIF data
+                img = img.convert("RGB") # Ensure RGB format for compatibility
                 if self.resize and img.width > self.max_width:
                     new_height = int((self.max_width / img.width) * img.height)
                     img = img.resize((self.max_width, new_height), Image.Resampling.LANCZOS)
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                img.save(output_path, format=self.output_format.upper(), quality=self.quality, optimize=True)
+                img.save(output_path, format=self.output_format.upper(), quality=self.quality, optimize=True, exif=exif_data)
                 if worker_id is not None:
                     progress_queue.put(worker_id)
         except Exception as e:
@@ -177,13 +178,13 @@ if __name__ == "__main__":
     parser.add_argument("--max_width", type=int, default=1024, help="Maximum width for resized images (default: 1024)")
     parser.add_argument("--output_format", type=str, default='jpeg', choices=['jpeg', 'png', 'webp'], help="Desired output format (default: jpeg)")
     parser.add_argument("--recursive", action="store_true", help="Enable recursive search for images in subdirectories")
-    parser.add_argument("--break_structure", action="store_true", help="Break folder structure in output directory")
+    parser.add_argument("--collapse", action="store_true", help="Break folder structure in output directory")
     parser.add_argument("--parallel", action="store_true", help="Enable parallel processing for faster compression")
     
     args = parser.parse_args()
     
     try:
-        compressor = ImageCompressor(args.input_folder, args.output_folder, args.quality, args.resize, args.max_width, args.output_format, args.recursive, args.break_structure, args.parallel)
+        compressor = ImageCompressor(args.input_folder, args.output_folder, args.quality, args.resize, args.max_width, args.output_format, args.recursive, args.collapse, args.parallel)
         compressor.compress_images()
     except FileNotFoundError as e:
         print(e)
