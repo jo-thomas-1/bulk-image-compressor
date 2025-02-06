@@ -109,7 +109,6 @@ EXIF metadata (including orientation) is preserved for JPEG images. This ensures
 
 ## Future Enhancements
 
-- Add more image format support (TIFF, BMP, etc.).
 - Implement GPU acceleration for faster processing.
 - Improve adaptive load balancing for parallel execution.
 
