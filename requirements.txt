@@ -1,0 +1,4 @@
+Pillow
+psutil
+tqdm
+numpy
